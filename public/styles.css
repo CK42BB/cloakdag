@@ -198,28 +198,6 @@ mark { background: var(--hl); color: inherit; padding: 0 2px; box-decoration-bre
 @media (max-width: 900px) { .team { grid-template-columns: repeat(3, 1fr); row-gap: 44px; } }
 @media (max-width: 520px) { .team { grid-template-columns: 1fr 1fr; } }
 
-/* Timeline */
-.timeline { padding: clamp(64px, 10vw, 120px) var(--gutter) clamp(72px, 11vw, 140px); }
-.timeline__sub { margin-top: 14px; font-style: italic; color: #cfcbc2; }
-.steps {
-  position: relative; display: grid; grid-template-columns: repeat(4, 1fr);
-  margin-top: clamp(56px, 8vw, 96px);
-}
-.steps::before { content: ""; position: absolute; left: 0; right: 0; top: calc(4.2em + 9px); height: 2px; background: var(--light); }
-.steps li { display: grid; grid-template-rows: 4.2em 18px auto; justify-items: center; text-align: center; padding: 0 8px; font-size: 15px; }
-.steps li span { align-self: end; padding-bottom: 14px; line-height: 1.4; }
-.steps li::before { content: ""; grid-row: 2; width: 18px; height: 18px; border-radius: 50%; background: var(--light); position: relative; z-index: 1; }
-.steps b { grid-row: 3; margin-top: 18px; font-size: clamp(24px, 3vw, 36px); }
-.steps li span { grid-row: 1; }
-@media (max-width: 720px) {
-  .steps { grid-template-columns: 1fr; gap: 28px; padding-left: 34px; }
-  .steps::before { left: 8px; right: auto; top: 0; bottom: 0; width: 2px; height: auto; }
-  .steps li { grid-template-rows: auto auto; grid-template-columns: auto; justify-items: start; text-align: left; padding: 0; position: relative; }
-  .steps li::before { position: absolute; left: -34px; top: 6px; }
-  .steps li span { grid-row: 2; padding: 4px 0 0; }
-  .steps b { grid-row: 1; margin: 0; }
-}
-
 /* Footer */
 .foot { padding: clamp(72px, 10vw, 120px) var(--gutter) 32px; text-align: center; overflow: hidden; }
 .foot__sharp { display: grid; justify-content: center; font-size: clamp(48px, 9vw, 120px); line-height: .95; }
