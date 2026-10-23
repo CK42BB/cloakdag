@@ -17,6 +17,6 @@ Then Settings → Networking → Custom Domain → `cloakdag.com` and add the CN
 
 ## Editing
 
-- Contact email: search `hello@cloakdag.com` in `public/index.html`.
+- Contact email: search `jb@cloakdag.com` in `public/index.html`.
 - Client logos: `public/img/clients/` (white-on-transparent, shown on the dark band).
 - Team photos: `public/img/team/`.
