@@ -195,7 +195,6 @@ mark { background: var(--hl); color: inherit; padding: 0 2px; box-decoration-bre
 .member h3 { font-size: clamp(30px, 3vw, 40px); margin-top: 18px; }
 .member__yrs { font-size: 14px; margin-top: 4px; }
 .member__skills { margin-top: 12px; font: italic 15px/1.45 var(--serif); color: var(--ink-soft); }
-.agency__note { margin-top: clamp(40px, 5vw, 64px); max-width: 640px; font-size: 16px; color: var(--ink-soft); }
 @media (max-width: 900px) { .team { grid-template-columns: repeat(3, 1fr); row-gap: 44px; } }
 @media (max-width: 520px) { .team { grid-template-columns: 1fr 1fr; } }
 
