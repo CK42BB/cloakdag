@@ -17,6 +17,8 @@ const GH = {
   branch: process.env.GITHUB_BRANCH || 'main',
   api: process.env.GITHUB_API || 'https://api.github.com',
 };
+// scrypt$<salt>$<hash>, made with: node server.js hash-password
+const PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || '';
 const MAIL = { key: process.env.RESEND_API_KEY, from: process.env.MAIL_FROM || 'Cloak and Dagger <admin@cloakdag.com>' };
 const LINK_TTL = 15 * 60 * 1000;
 const SESSION_TTL = 30 * 24 * 60 * 60 * 1000;
@@ -118,6 +120,18 @@ const sessionOf = (req) => unsign(cookies(req).cd_admin, 'sess');
 function sessionCookie(value, maxAge) {
   const secure = SITE_URL.startsWith('https:') ? '; Secure' : '';
   return `cd_admin=${value}; Path=/admin; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
+}
+
+function hashPassword(pw) {
+  const salt = crypto.randomBytes(16);
+  return `scrypt$${salt.toString('base64')}$${crypto.scryptSync(pw, salt, 32).toString('base64')}`;
+}
+function checkPassword(pw) {
+  const [kind, salt, hash] = PASSWORD_HASH.split('$');
+  if (kind !== 'scrypt' || !salt || !hash || typeof pw !== 'string' || !pw) return false;
+  const want = Buffer.from(hash, 'base64');
+  const got = crypto.scryptSync(pw, Buffer.from(salt, 'base64'), want.length);
+  return crypto.timingSafeEqual(got, want);
 }
 
 const usedLinks = new Map(); // nonce -> expiry, so each emailed link signs in once
@@ -259,8 +273,13 @@ function editorPage(email) {
     .replace('</body>', `<script>window.CMS = ${boot};</script>\n<script src="/admin/editor.js"></script>\n</body>`);
 }
 
-const confirmPage = (token) => fs.readFileSync(path.join(ADMIN, 'login.html'), 'utf8')
-  .replace('<body>', `<body data-token="${escAttr(token)}">`);
+const loginPage = (token) => fs.readFileSync(path.join(ADMIN, 'login.html'), 'utf8')
+  .replace('<body>', `<body data-mode="${PASSWORD_HASH ? 'password' : 'link'}"${token ? ` data-token="${escAttr(token)}"` : ''}>`);
+
+function startSession(email) {
+  const sess = sign({ k: 'sess', e: email, x: Date.now() + SESSION_TTL });
+  return sessionCookie(sess, SESSION_TTL / 1000);
+}
 
 async function publish(body, email) {
   const { region, title, description, base, note, force } = body;
@@ -346,14 +365,21 @@ async function admin(req, res, p) {
 
   if (p === '/admin' || p === '/admin/') {
     if (req.method !== 'GET') return json(res, 405, {});
-    if (!session) return html(res, fs.readFileSync(path.join(ADMIN, 'login.html'), 'utf8'));
+    if (!session) return html(res, loginPage());
     return html(res, editorPage(session.e));
   }
 
   if (p === '/admin/login' && req.method === 'POST') {
     if (rateLimited(ip)) return json(res, 429, { error: 'Too many attempts. Try again in a few minutes.' });
-    const { email } = JSON.parse(await readBody(req, 2000) || '{}');
+    const { email, password } = JSON.parse(await readBody(req, 2000) || '{}');
     const e = String(email || '').trim().toLowerCase();
+    if (PASSWORD_HASH) {
+      if (!ADMIN_EMAILS.includes(e) || !checkPassword(password)) {
+        return json(res, 401, { error: 'That email and password don’t match.' });
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': startSession(e) });
+      return res.end(JSON.stringify({ ok: true, signedIn: true }));
+    }
     if (ADMIN_EMAILS.includes(e)) {
       const token = sign({ k: 'link', e, x: Date.now() + LINK_TTL, n: crypto.randomBytes(12).toString('hex') });
       try { await sendLoginEmail(e, `${SITE_URL}/admin/auth?t=${token}`); }
@@ -369,7 +395,7 @@ async function admin(req, res, p) {
   // so mail scanners that pre-open links don't use up the one-time token.
   if (p === '/admin/auth' && req.method === 'GET') {
     const t = new URL(req.url, 'http://x').searchParams.get('t') || '';
-    return html(res, confirmPage(t));
+    return html(res, loginPage(t));
   }
   if (p === '/admin/auth' && req.method === 'POST') {
     const t = new URLSearchParams(await readBody(req, 4000)).get('t');
@@ -379,8 +405,7 @@ async function admin(req, res, p) {
       return res.end();
     }
     usedLinks.set(link.n, link.x);
-    const sess = sign({ k: 'sess', e: link.e, x: Date.now() + SESSION_TTL });
-    res.writeHead(303, { Location: '/admin', 'Set-Cookie': sessionCookie(sess, SESSION_TTL / 1000) });
+    res.writeHead(303, { Location: '/admin', 'Set-Cookie': startSession(link.e) });
     return res.end();
   }
 
@@ -409,6 +434,14 @@ async function admin(req, res, p) {
     if (file.startsWith(ADMIN + path.sep) && /\.(js|css)$/.test(file)) return send(res, 200, file, { 'Cache-Control': 'no-cache' });
   }
   return notFound(res);
+}
+
+if (process.argv[2] === 'hash-password') {
+  // Prints a value for ADMIN_PASSWORD_HASH. Reads the password from stdin so it stays out of shell history.
+  let pw = '';
+  process.stdin.on('data', (c) => { pw += c; });
+  process.stdin.on('end', () => console.log(hashPassword(pw.replace(/\r?\n$/, ''))));
+  return;
 }
 
 http.createServer(async (req, res) => {

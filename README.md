@@ -18,7 +18,7 @@ Then Settings → Networking → Custom Domain → `cloakdag.com` and add the CN
 
 ## Site editor (/admin)
 
-Non-technical editing at **cloakdag.com/admin**: sign in with an emailed one-time link, click any text to edit it,
+Non-technical editing at **cloakdag.com/admin**: sign in with email + shared password (or an emailed one-time link), click any text to edit it,
 replace images, reorder/hide/copy/add sections, change backgrounds/spacing/columns, then **Publish**.
 
 - Publishing commits `public/index.html` to GitHub (author = the editor's email) and updates the live file immediately;
@@ -34,6 +34,7 @@ replace images, reorder/hide/copy/add sections, change backgrounds/spacing/colum
 | Variable | Value |
 | --- | --- |
 | `ADMIN_EMAILS` | `jb@cloakdag.com,…` (comma-separated; remove someone to revoke access) |
+| `ADMIN_PASSWORD_HASH` | shared password, hashed: `printf '%s' 'the-password' \| node server.js hash-password`. While set, /admin asks for email + password instead of emailing a link; unset it to switch to email links |
 | `SESSION_SECRET` | long random string (`openssl rand -hex 32`) |
 | `SITE_URL` | `https://cloakdag.com` |
 | `GITHUB_TOKEN` | fine-grained token, repo `CK42BB/cloakdag` only, **Contents: Read and write** |

@@ -43,9 +43,13 @@
 
     <form id="ask">
       <h1>Site editor</h1>
-      <p>Enter your email and we'll send you a sign-in link.</p>
+      <p id="lede">Enter your email and we'll send you a sign-in link.</p>
       <label for="email">Email</label>
-      <input id="email" type="email" autocomplete="email" required placeholder="you@cloakdag.com">
+      <input id="email" type="email" autocomplete="username" required placeholder="you@cloakdag.com">
+      <div id="pw" hidden>
+        <label for="password" style="margin-top:14px">Password</label>
+        <input id="password" type="password" autocomplete="current-password">
+      </div>
       <button type="submit">Email me a link</button>
       <p class="msg" id="msg" role="status"></p>
     </form>
@@ -60,6 +64,13 @@
 
   <script>
     const token = document.body.dataset.token;
+    const usePassword = document.body.dataset.mode === 'password';
+    if (usePassword) {
+      document.getElementById('lede').textContent = 'Sign in to edit cloakdag.com.';
+      document.getElementById('pw').hidden = false;
+      document.getElementById('password').required = true;
+      document.querySelector('#ask button').textContent = 'Sign in';
+    }
     const msg = document.getElementById('msg');
     if (token) {
       document.getElementById('ask').hidden = true;
@@ -74,15 +85,19 @@
       const btn = e.target.querySelector('button');
       btn.disabled = true;
       msg.className = 'msg';
-      msg.textContent = 'Sending…';
+      msg.textContent = usePassword ? 'Signing in…' : 'Sending…';
       try {
         const r = await fetch('/admin/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: document.getElementById('email').value }),
+          body: JSON.stringify({
+            email: document.getElementById('email').value,
+            ...(usePassword && { password: document.getElementById('password').value }),
+          }),
         });
         const out = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(out.error || 'Something went wrong.');
+        if (out.signedIn) return location.assign('/admin');
         msg.textContent = 'If that address has editor access, a link is on its way. Check your inbox (and spam).';
       } catch (err) {
         msg.textContent = err.message;
