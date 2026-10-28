@@ -219,3 +219,28 @@ mark { background: var(--hl); color: inherit; padding: 0 2px; box-decoration-bre
   .reveal { opacity: 1; translate: none; transition: none; }
   .cover__word img { animation: none; }
 }
+
+/* Options set from the /admin editor */
+body:not(.cms) [data-hidden] { display: none !important; }
+section[data-pad="compact"] { padding-top: clamp(36px, 5vw, 64px); padding-bottom: clamp(36px, 5vw, 64px); }
+section[data-pad="roomy"] { padding-top: clamp(110px, 16vw, 220px); padding-bottom: clamp(110px, 16vw, 220px); }
+section[data-align="left"], section[data-align="left"] * { text-align: left !important; }
+section[data-align="center"], section[data-align="center"] * { text-align: center !important; }
+section[data-align="right"], section[data-align="right"] * { text-align: right !important; }
+section[data-align="center"] :is(.prose__body, .quote__text) { margin-inline: auto; }
+section[data-align="right"] :is(.prose__body, .quote__text) { margin-left: auto; margin-right: 0; }
+@media (min-width: 981px) {
+  [data-cols="1"] { grid-template-columns: minmax(0, 1fr); }
+  [data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  [data-cols="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  [data-cols="5"] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+/* Section types added from the editor */
+.prose { padding: clamp(64px, 10vw, 120px) var(--gutter); }
+.prose__body { max-width: 680px; margin-top: clamp(24px, 4vw, 44px); font-size: clamp(17px, 1.6vw, 19px); }
+.prose__body p + p { margin-top: 1em; }
+.quote { padding: clamp(80px, 12vw, 160px) var(--gutter); text-align: center; }
+.quote__text { margin: 0 auto; max-width: 980px; font: clamp(28px, 4.4vw, 60px)/1.15 var(--type); }
+.quote__by { margin-top: 28px; font-size: 16px; opacity: .75; }

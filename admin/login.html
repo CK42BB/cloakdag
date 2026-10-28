@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Editor sign-in — Cloak and Dagger</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100svh; display: grid; place-items: center; padding: 24px 16px;
+      background: #b8b2a3; color: #2e2821; font: 17px/1.55 Georgia, serif;
+    }
+    .card {
+      width: min(460px, 100%); background: #efeadb; padding: 40px 32px 32px;
+      transform: rotate(-1deg); box-shadow: 0 30px 60px -20px rgba(0,0,0,.45);
+    }
+    img { display: block; width: 96px; margin: 0 auto 18px; }
+    h1 { margin: 0 0 6px; text-align: center; font: 400 34px/1.1 "Special Elite", "Courier New", monospace; }
+    p { margin: 0 0 22px; text-align: center; color: #57524a; }
+    label { display: block; font: 14px "Special Elite", monospace; margin-bottom: 6px; }
+    input {
+      width: 100%; font: 17px Georgia, serif; padding: 12px 14px; border: 1.5px solid #2e2821;
+      background: #fafaf8; color: inherit; border-radius: 0;
+    }
+    button {
+      display: block; width: 100%; margin-top: 16px; padding: 14px; border: 0; cursor: pointer;
+      background: #1c1b17; color: #efeadb; font: 18px "Special Elite", "Courier New", monospace;
+    }
+    button:disabled { opacity: .6; cursor: default; }
+    .msg { margin: 18px 0 0; min-height: 1.5em; font-size: 15px; }
+    .msg.err { color: #9b2c1f; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <img src="/img/mark-ink.webp" alt="Cloak and Dagger">
+
+    <form id="ask">
+      <h1>Site editor</h1>
+      <p>Enter your email and we'll send you a sign-in link.</p>
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" required placeholder="you@cloakdag.com">
+      <button type="submit">Email me a link</button>
+      <p class="msg" id="msg" role="status"></p>
+    </form>
+
+    <form id="go" method="post" action="/admin/auth" hidden>
+      <h1>Welcome back</h1>
+      <p>Click below to open the editor.</p>
+      <input type="hidden" name="t" id="t">
+      <button type="submit">Sign in</button>
+    </form>
+  </main>
+
+  <script>
+    const token = document.body.dataset.token;
+    const msg = document.getElementById('msg');
+    if (token) {
+      document.getElementById('ask').hidden = true;
+      document.getElementById('go').hidden = false;
+      document.getElementById('t').value = token;
+    } else if (new URLSearchParams(location.search).has('expired')) {
+      msg.textContent = 'That link has expired or was already used. Request a new one.';
+      msg.className = 'msg err';
+    }
+    document.getElementById('ask').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      btn.disabled = true;
+      msg.className = 'msg';
+      msg.textContent = 'Sending…';
+      try {
+        const r = await fetch('/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: document.getElementById('email').value }),
+        });
+        const out = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(out.error || 'Something went wrong.');
+        msg.textContent = 'If that address has editor access, a link is on its way. Check your inbox (and spam).';
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.className = 'msg err';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
