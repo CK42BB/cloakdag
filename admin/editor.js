@@ -25,13 +25,13 @@
   const ITEMS = [
     ['.card__band > p', 'Line'], ['.cols > .col', 'Column'], ['.col > p', 'Paragraph'],
     ['.prose__body > p', 'Paragraph'], ['.team > li', 'Team member'], ['.vitals > li', 'List item'],
-    ['.logos > li', 'Logo'], ['.sectors > .sector', 'Sector'],
+    ['.logos > li', 'Logo'], ['.sectors > .sector', 'Sector'], ['.dossier__list > li', 'Service'],
   ];
   const ITEM_SEL = ITEMS.map(([s]) => s).join(',');
   // Enter splits these into a new item; elsewhere Enter adds a line break.
   const SPLIT = '.card__band > p, .col > p, .prose__body > p, .vitals > li';
   const GRIDS = '.cols, .team, .logos, .sectors';
-  const RUNTIME_CLASSES = ['in', 'nav--solid'];
+  const RUNTIME_CLASSES = ['in', 'nav--solid', 'is-active', 'is-open'];
 
   const regions = () => [$('body > header.nav'), $('main'), $('body > footer')];
   const DRAFT_KEY = 'cd-cms-draft';
@@ -150,7 +150,7 @@
 
   const KEEP_TAGS = new Set('HEADER NAV MAIN FOOTER SECTION DIV ARTICLE ASIDE BLOCKQUOTE H1 H2 H3 H4 P UL OL LI A IMG SPAN B STRONG I EM U S MARK BR SMALL SUB SUP'.split(' '));
   const DROP_TAGS = new Set('SCRIPT STYLE IFRAME OBJECT EMBED LINK META FORM INPUT TEXTAREA BUTTON SELECT SVG BASE'.split(' '));
-  const KEEP_ATTR = /^(class|id|href|src|alt|title|loading|width|height|role|target|rel|aria-[a-z]+|data-(hidden|cols|pad|align))$/;
+  const KEEP_ATTR = /^(class|id|href|src|alt|title|loading|width|height|role|target|rel|aria-(?!expanded)[a-z]+|data-(hidden|cols|pad|align))$/;
 
   function clean(root) {
     for (const el of [root, ...root.querySelectorAll('*')]) {
@@ -162,7 +162,7 @@
         else if (a.name === 'href' && !/^(https?:|mailto:|tel:|#|\/)/i.test(a.value.trim())) el.removeAttribute(a.name);
         else if (a.name === 'src' && !/^(https?:|\/)/i.test(a.value.trim())) el.removeAttribute(a.name);
       }
-      if (el.classList.length) {
+      if (el.hasAttribute('class')) {
         RUNTIME_CLASSES.forEach((c) => el.classList.remove(c));
         [...el.classList].filter((c) => c.startsWith('cms-')).forEach((c) => el.classList.remove(c));
         if (!el.classList.length) el.removeAttribute('class');
